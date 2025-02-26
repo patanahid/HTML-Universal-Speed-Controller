@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Speed Controller</h2>
+    
+    <div id="autoSpeedButton" class="auto-speed-button">
+      <button class="speed-btn auto-trigger-btn">
+        <span class="auto-status">Auto-Speed: Off</span>
+        <span class="auto-speed"></span>
+      </button>
+    </div>
+    
+    <div class="speed-buttons">
+      <button class="speed-btn" data-speed="1">Normal</button>
+      <button class="speed-btn" data-speed="2">2x</button>
+      <button class="speed-btn" data-speed="5">5x</button>
+      <button class="speed-btn" data-speed="10">10x</button>
+      <button class="speed-btn" data-speed="20">20x</button>
+      <button class="speed-btn" data-speed="50">50x</button>
+      <button class="speed-btn stop-btn" data-speed="0">Stop</button>
+    </div>
+    <center><p>You can add or remove presets in the settings.</p></center>
+
+    <div class="toggles">
+      <div class="toggle-item">
+        <label>
+          <input type="checkbox" id="setIntervalToggle" checked>
+          setInterval
+        </label>
+      </div>
+      <div class="toggle-item">
+        <label>
+          <input type="checkbox" id="setTimeoutToggle" checked>
+          setTimeout
+        </label>
+      </div>
+      <div class="toggle-item">
+        <label>
+          <input type="checkbox" id="performanceToggle" checked>
+          performance
+        </label>
+      </div>
+      <div class="toggle-item">
+        <label>
+          <input type="checkbox" id="dateNowToggle" checked>
+          Date.now
+        </label>
+      </div>
+      <div class="toggle-item">
+        <label>
+          <input type="checkbox" id="requestAnimationFrameToggle">
+          requestAnimationFrame
+        </label>
+      </div>
+    </div>
+
+    <p>Add custom domains in the settings.</p>
+    <div class="buttons">
+      <button id="optionsButton">Settings</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "manifest_version": 2,
+  "name": "HTML Universal Speed Controller",
+  "version": "1.0",
+  "description": "Control the speed of HTML websites with various timing methods",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "speed-controller@example.com",
+      "strict_min_version": "79.0"
+    }
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"]
+  }],
+  "browser_action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Speed Controller"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "browser_style": true,
+    "open_in_tab": true
+  },
+  "icons": {
+    "96": "icons/icon-96.svg",
+    "128": "icons/icon-96.svg"
+  }
+}
