@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html>
 <head>
@@ -75,4 +76,83 @@
   </div>
   <script src="options.js"></script>
 </body>
+=======
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <div class="section">
+      <h2>Speed Steps Configuration</h2>
+      <div class="speed-steps">
+        <div class="speed-steps-list" id="speedStepsList">
+          <!-- Speed steps will be added here dynamically -->
+        </div>
+        <div class="speed-step-controls">
+          <input type="number"  id="newSpeedStep" min="1" placeholder="Enter new speed (e.g., 15)">
+          <button id="addSpeedStep">Add Speed Step</button>
+        </div>
+      </div>
+    </div>
+
+    
+
+    <div class="section">
+      <h2>Website Speed Settings</h2>
+      <p class="description" >
+        Enter website domains and their custom speeds (one per line).<br>
+        Format: domain.com:speed<br>
+        Examples:<br>
+        example.com:20<br>
+        game.example.com:50
+<br><br>
+        Note: You need to add the "www." before websites, if the websites have that.
+      </p>
+      
+      <div class="textarea-container">
+        <textarea id="websitesList" rows="12" placeholder="Enter websites and speeds (one per line)&#10;example.com:20&#10;game.example.com:50"></textarea>
+      </div>
+
+      
+      <div class="speed-presets">
+        <h3>Quick Add Using Preset</h3>
+        <div class="preset-controls">
+          <input type="text" id="domainInput" placeholder="Enter domain">
+          <div class="preset-buttons" id="quickAddPresets">
+            <!-- Quick add preset buttons will be added here dynamically -->
+          </div>
+        </div>
+      </div>
+        <p>You can add custom speed using the above format.</p>
+        <div class="section" style="display: none;">
+          <h2>Preset Buttons Configuration</h2>
+          <div class="preset-config">
+            <div class="preset-buttons-list" id="presetButtonsList">
+              <!-- Preset buttons will be added here dynamically -->
+            </div>
+            <div class="preset-button-controls">
+              <div class="preset-input-group">
+                <input type="text" id="presetLabel" placeholder="Button label (e.g., Fast)">
+                <input type="number" id="presetSpeed" min="1" placeholder="Speed value (e.g., 15)">
+              </div>
+              <button id="addPreset">Add Preset Button</button>
+            </div>
+          </div>
+        </div>
+
+      <div class="buttons">
+        <button id="saveButton">Save All Changes</button>
+        <button id="resetButton">Reset to Default</button>
+      </div>
+
+      <div id="saveStatus" class="status-message"></div>
+    </div>
+  </div>
+  <script src="options.js"></script>
+</body>
+>>>>>>> 35e68879b7b90e7d6fd44c7ef4d72d42ef2b8e9a
 </html>

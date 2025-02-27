@@ -1,7 +1,16 @@
+<<<<<<< HEAD
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
   <circle cx="24" cy="24" r="22" fill="#4CAF50" />
   <path style="transform: translate(8px, 0);" d="M34 24L19 34V14L34 24Z" fill="#a6d7a8"/>
   <path style="transform: translate(-8px, 0 )" d="M34 24L19 34V14L34 24Z" fill="white"/>
   <path style="transform: translate(1px, 0)" d="M34 24L19 34V14L34 24Z" fill="white"/>
+=======
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="24" cy="24" r="22" fill="#4CAF50" />
+  <path style="transform: translate(8px, 0);" d="M34 24L19 34V14L34 24Z" fill="#a6d7a8"/>
+  <path style="transform: translate(-8px, 0 )" d="M34 24L19 34V14L34 24Z" fill="white"/>
+  <path style="transform: translate(1px, 0)" d="M34 24L19 34V14L34 24Z" fill="white"/>
+>>>>>>> 35e68879b7b90e7d6fd44c7ef4d72d42ef2b8e9a
 </svg>

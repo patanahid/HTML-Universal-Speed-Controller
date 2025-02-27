@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 body {
   margin: 0;
   padding: 20px;
@@ -431,4 +432,439 @@ button:active {
 .status-message.error {
   background-color: #f44336;
   color: white;
+=======
+body {
+  margin: 0;
+  padding: 20px;
+  background-color: #1e1e1e;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile styles */
+@media (max-width: 600px) {
+  body {
+    padding: 15px;
+  }
+
+  .container {
+    max-width: 100%;
+  }
+
+  /* Increase touch targets */
+  .speed-step,
+  .preset-button-item,
+  button,
+  input,
+  textarea {
+    min-height: 44px;
+  }
+
+  /* Adjust spacing for touch */
+  .speed-steps-list,
+  .preset-buttons-list {
+    gap: 12px;
+  }
+
+  /* Improve preset buttons layout on mobile */
+  .preset-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+  }
+
+  .preset-buttons button {
+    width: 100%;
+    min-height: 44px;
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  /* Make edit controls more touch-friendly */
+  .preset-button-item .edit-controls {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    z-index: 1000;
+  }
+
+  .preset-button-item .edit-inputs {
+    flex-direction: column;
+  }
+
+  .preset-button-item .edit-inputs input {
+    min-height: 44px;
+  }
+
+  /* Enhance textarea experience */
+  textarea {
+    min-height: 120px;
+    font-size: 16px;
+    padding: 12px;
+    line-height: 1.6;
+  }
+
+  /* Improve description readability */
+  .description {
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 16px;
+  }
+
+  /* Prevent text selection */
+  * {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Allow text selection in inputs */
+  input, textarea {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  /* Enhance button feedback */
+  button:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
+  }
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.section {
+  background-color: #2d2d2d;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+h2, h3 {
+  margin: 0;
+  color: #4CAF50;
+}
+
+h2 {
+  margin-bottom: 15px;
+}
+
+h3 {
+  margin-bottom: 10px;
+}
+
+/* Speed Steps Styling */
+.speed-steps, .preset-config {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.speed-steps-list, .preset-buttons-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.speed-step, .preset-button-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #363636;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #404040;
+}
+.speed-step button{
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  background-color: grey;
+  color: White;
+  outline: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  
+}
+  
+
+.preset-button-item {
+  position: relative;
+}
+
+.preset-button-item .edit-controls {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #363636;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.preset-button-item.editing .edit-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preset-button-item .edit-inputs {
+  display: flex;
+  gap: 8px;
+}
+
+.preset-button-item .edit-inputs input {
+  flex: 1;
+  padding: 4px 8px;
+  background-color: #1e1e1e;
+  border: 1px solid #404040;
+  color: white;
+  border-radius: 4px;
+}
+
+.preset-button-item .edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.preset-button-item .edit-actions button {
+  flex: 1;
+  padding: 4px 8px;
+}
+
+.speed-step span, .preset-button-item span {
+  font-size: 16px;
+  font-weight: bold;
+  color: #4CAF50;
+}
+
+.preset-button-item .button-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.preset-button-item button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preset-button-item .edit-btn {
+  color: #2196F3;
+}
+
+.preset-button-item .delete-btn {
+  color: #f44336;
+}
+
+.preset-button-item button:hover {
+  background-color: #ffffff20;
+}
+
+.speed-step-controls, .preset-button-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preset-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.preset-input-group input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border: 1px solid #404040;
+  font-size: 14px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+#addSpeedStep, #addPreset {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#addSpeedStep:hover, #addPreset:hover {
+  background-color: #45a049;
+}
+
+/* Website Settings Section */
+.description {
+  color: #cccccc;
+  line-height: 1.5;
+  background-color: inherit;
+  padding: 15px;
+  border-radius: 4px;
+  margin: 0 0 15px 0;
+}
+
+.textarea-container {
+  width: 100%;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  background-color: #363636;
+  color: #ffffff;
+  border: 2px solid #404040;
+  text-decoration: none;
+  resize: vertical;
+  font-family: monospace;
+  line-height: 1.4;
+  font-size: 14px;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.speed-presets {
+  background-color: #363636;
+  padding: 15px;
+  border-radius: 4px;
+  margin: 15px 0;
+}
+
+.preset-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#domainInput, input{
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border: 1px solid #404040;
+  font-size: 14px;
+}
+
+.preset-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preset-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.preset-buttons button:hover {
+  background-color: #45a049;
+}
+
+.preset-buttons button:active {
+  transform: scale(0.95);
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+#saveButton, #resetButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+#saveButton {
+  flex: 2;
+  background-color: #4CAF50;
+  color: white;
+}
+
+#resetButton {
+  flex: 1;
+  background-color: #363636;
+  color: white;
+  border: 1px solid #404040;
+}
+
+#saveButton:hover {
+  background-color: #45a049;
+}
+
+#resetButton:hover {
+  background-color: #404040;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.status-message {
+  text-align: center;
+  padding: 10px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  margin-top: 10px;
+}
+
+.status-message.show {
+  opacity: 1;
+}
+
+.status-message.success {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.status-message.error {
+  background-color: #f44336;
+  color: white;
+>>>>>>> 35e68879b7b90e7d6fd44c7ef4d72d42ef2b8e9a
 }
