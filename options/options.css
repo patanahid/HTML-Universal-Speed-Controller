@@ -150,6 +150,22 @@ h3 {
   border-radius: 4px;
   border: 1px solid #404040;
 }
+.speed-step button{
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  background-color: grey;
+  color: White;
+  outline: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  
+}
+  
 
 .preset-button-item {
   position: relative;
@@ -277,7 +293,7 @@ input:focus {
 .description {
   color: #cccccc;
   line-height: 1.5;
-  background-color: #363636;
+  background-color: inherit;
   padding: 15px;
   border-radius: 4px;
   margin: 0 0 15px 0;
@@ -294,7 +310,8 @@ textarea {
   border-radius: 4px;
   background-color: #363636;
   color: #ffffff;
-  border: 1px solid #404040;
+  border: 2px solid #404040;
+  text-decoration: none;
   resize: vertical;
   font-family: monospace;
   line-height: 1.4;
@@ -319,7 +336,7 @@ textarea:focus {
   gap: 10px;
 }
 
-#domainInput {
+#domainInput, input{
   padding: 8px;
   border-radius: 4px;
   background-color: #1e1e1e;

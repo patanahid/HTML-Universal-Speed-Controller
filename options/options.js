@@ -118,8 +118,8 @@ function renderPresetButtons(presets) {
         return;
       }
 
-      if (newSpeed > 100) {
-        showStatus('Speed cannot exceed 100x', true);
+      if (newSpeed > 500) {
+        showStatus('Speed cannot exceed 500x', true);
         return;
       }
 
@@ -193,8 +193,8 @@ addSpeedStep.addEventListener('click', async () => {
     return;
   }
 
-  if (newSpeed > 100) {
-    showStatus('Speed cannot exceed 100x', true);
+  if (newSpeed > 500) {
+    showStatus('Speed cannot exceed 500x', true);
     return;
   }
 
@@ -228,8 +228,8 @@ addPreset.addEventListener('click', async () => {
     return;
   }
 
-  if (speed > 100) {
-    showStatus('Speed cannot exceed 100x', true);
+  if (speed > 500) {
+    showStatus('Speed cannot exceed 500x', true);
     return;
   }
 
@@ -305,8 +305,8 @@ function parseWebsitesList(text) {
         return;
       }
 
-      if (speedNum > 100) {
-        errors.push(`Speed cannot exceed 100x for ${domain}: ${speed}`);
+      if (speedNum > 500) {
+        errors.push(`Speed cannot exceed 500x for ${domain}: ${speed}`);
         return;
       }
 
