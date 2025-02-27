@@ -8,6 +8,11 @@ let isAutoSpeedActive = false;
 let currentAutoSpeed = null;
 let currentDomain = null;
 
+// Mobile detection function
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 // Listen for auto-speed status updates
 browser.runtime.onMessage.addListener((message) => {
   if (message.action === 'updateAutoSpeedStatus') {
@@ -34,17 +39,24 @@ function updateAutoSpeedDisplay(status) {
       } else {
         btn.classList.remove('active');
       }
-      btn.disabled = true; // Disable manual speed changes when auto-speed is active
     });
+
+    // Check if current speed differs from saved
+    const activeSpeedBtn = document.querySelector('.speed-btn.active:not(.auto-trigger-btn)');
+    if (activeSpeedBtn) {
+      const currentSpeed = parseInt(activeSpeedBtn.dataset.speed);
+      if (currentSpeed !== status.speed) {
+        autoTriggerBtn.classList.add('modified');
+        autoSpeed.textContent = `${currentSpeed}x (saved: ${status.speed}x)`;
+      } else {
+        autoTriggerBtn.classList.remove('modified');
+      }
+    }
   } else {
     autoStatus.textContent = 'Auto-Speed: Off';
     autoSpeed.textContent = '';
     autoTriggerBtn.classList.remove('active');
-    
-    // Re-enable speed buttons
-    speedButtons.forEach(btn => {
-      btn.disabled = false;
-    });
+    autoTriggerBtn.classList.remove('modified');
   }
 }
 
@@ -60,6 +72,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Tab might not have our content script
       console.error('Error checking auto-speed status:', e);
     }
+  }
+
+  if (isMobileDevice()) {
+    // Create a mobile optimization section
+    const mobileOptSection = document.createElement('div');
+    mobileOptSection.className = 'toggle-section mobile-only';
+    mobileOptSection.innerHTML = `
+      <label class="toggle">
+        <input type="checkbox" id="mobileOptimizationToggle" checked>
+        <span class="toggle-label">Mobile Optimization</span>
+      </label>
+    `;
+    
+    // Insert it before the options button
+    optionsButton.parentNode.insertBefore(mobileOptSection, optionsButton);
+    
+    // Add the handler
+    const mobileOptToggle = document.getElementById('mobileOptimizationToggle');
+    mobileOptToggle.addEventListener('change', async () => {
+      const isOptimized = mobileOptToggle.checked;
+      await browser.storage.local.set({ mobileOptimized: isOptimized });
+      
+      // Apply optimization immediately
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      await browser.tabs.sendMessage(tabs[0].id, {
+        action: 'setMobileOptimization',
+        optimized: isOptimized
+      });
+    });
   }
 });
 
@@ -144,27 +185,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Speed button click handler
 async function handleSpeedButtonClick() {
-  const speed = parseInt(this.dataset.speed);
+  let speed = parseInt(this.dataset.speed);
   
-  // Allow stop button to work even when auto-speed is active
-  if (this.disabled && speed !== 0) return;
-  
-  // If stopping while auto-speed is active, disable auto-speed
-  if (speed === 0 && isAutoSpeedActive) {
-    const { autoSpeedSites = {} } = await browser.storage.local.get('autoSpeedSites');
-    if (currentDomain) {
-      delete autoSpeedSites[currentDomain];
-      await browser.storage.local.set({ autoSpeedSites });
-      updateAutoSpeedDisplay({ active: false });
-    }
+  // Apply a mobile multiplier if needed
+  if (isMobileDevice() && speed > 1) {
+    const mobileFactor = 1.75;
+    const actualSpeed = speed * mobileFactor;
+    console.log(`Mobile detected: Boosting ${speed}x to ${actualSpeed}x internally`);
+    speed = actualSpeed;
   }
   
-  // Update button states
-  document.querySelectorAll('.speed-btn:not(.auto-trigger-btn)').forEach(b => b.classList.remove('active'));
-  if (speed !== 0) { // Don't highlight stop button
-    this.classList.add('active');
-  }
-
+  // Allow all speed changes when auto-speed is active
   const settings = {
     speed: speed,
     setInterval: setIntervalToggle.checked,
@@ -174,6 +205,27 @@ async function handleSpeedButtonClick() {
     requestAnimationFrame: requestAnimationFrameToggle.checked
   };
 
+  // Update button states
+  document.querySelectorAll('.speed-btn:not(.auto-trigger-btn)').forEach(b => b.classList.remove('active'));
+  if (speed !== 0) { // Don't highlight stop button
+    this.classList.add('active');
+  }
+
+  // If auto-speed is active, check if speed differs from saved
+  if (isAutoSpeedActive && currentDomain) {
+    const { autoSpeedSites = {} } = await browser.storage.local.get('autoSpeedSites');
+    const savedSpeed = autoSpeedSites[currentDomain];
+    
+    if (speed !== savedSpeed) {
+      // Visual indication that speed differs from saved
+      autoTriggerBtn.classList.add('modified');
+      autoSpeed.textContent = `${speed}x (saved: ${savedSpeed}x)`;
+    } else {
+      autoTriggerBtn.classList.remove('modified');
+      autoSpeed.textContent = `${speed}x on ${currentDomain}`;
+    }
+  }
+
   // Save settings
   await browser.storage.local.set(settings);
 
@@ -181,11 +233,11 @@ async function handleSpeedButtonClick() {
   const tabs = await browser.tabs.query({ active: true, currentWindow: true });
   const currentTab = tabs[0];
 
-  // Send message to content script with isAutoSpeed flag
+  // Send message to content script
   await browser.tabs.sendMessage(currentTab.id, {
     action: 'updateSettings',
     settings: settings,
-    isAutoSpeed: false // Indicate this is a manual speed change
+    isAutoSpeed: false
   });
 
   // Visual feedback
@@ -198,7 +250,35 @@ async function handleSpeedButtonClick() {
 // Auto-trigger button handlers
 const handleAutoTrigger = async (e) => {
   e.preventDefault(); // Prevent double-firing on mobile
+  
+  // Get current tab
+  const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+  const currentTab = tabs[0];
+  const url = new URL(currentTab.url);
+  const currentHost = url.hostname;
+  
   if (isAutoSpeedActive) {
+    if (autoTriggerBtn.classList.contains('modified')) {
+      // Update auto-speed with current speed
+      const { autoSpeedSites = {} } = await browser.storage.local.get('autoSpeedSites');
+      const activeSpeedBtn = document.querySelector('.speed-btn.active:not(.auto-trigger-btn)');
+      if (activeSpeedBtn) {
+        const newSpeed = parseInt(activeSpeedBtn.dataset.speed);
+        if (newSpeed > 0) { // Don't save if stop is selected
+          autoSpeedSites[currentHost] = newSpeed;
+          await browser.storage.local.set({ autoSpeedSites });
+          
+          // Update display with new speed
+          updateAutoSpeedDisplay({
+            active: true,
+            speed: newSpeed,
+            domain: currentHost
+          });
+          return;
+        }
+      }
+    }
+    
     // Disable auto-speed
     const { autoSpeedSites = {} } = await browser.storage.local.get('autoSpeedSites');
     if (currentDomain) {
@@ -215,10 +295,6 @@ const handleAutoTrigger = async (e) => {
         requestAnimationFrame: requestAnimationFrameToggle.checked
       };
       
-      // Get current tab
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-      const currentTab = tabs[0];
-      
       // Update content script
       await browser.tabs.sendMessage(currentTab.id, {
         action: 'updateSettings',
@@ -228,14 +304,55 @@ const handleAutoTrigger = async (e) => {
       
       // Update display
       updateAutoSpeedDisplay({ active: false });
-      
-      // Visual feedback for mobile
-      autoTriggerBtn.style.transform = 'scale(0.95)';
-      setTimeout(() => {
-        autoTriggerBtn.style.transform = 'scale(1)';
-      }, 100);
     }
+  } else {
+    // Enable auto-speed
+    const { autoSpeedSites = {} } = await browser.storage.local.get('autoSpeedSites');
+    
+    // Get selected speed or default to 20x
+    let selectedSpeed = 20; // Default speed
+    const activeSpeedBtn = document.querySelector('.speed-btn.active:not(.auto-trigger-btn)');
+    if (activeSpeedBtn) {
+      const btnSpeed = parseInt(activeSpeedBtn.dataset.speed);
+      if (btnSpeed > 0) { // Only use selected speed if it's not stop (0)
+        selectedSpeed = btnSpeed;
+      }
+    }
+    
+    // Save or update auto-speed for this site
+    autoSpeedSites[currentHost] = selectedSpeed;
+    await browser.storage.local.set({ autoSpeedSites });
+    
+    // Apply speed settings
+    const settings = {
+      speed: selectedSpeed,
+      setInterval: setIntervalToggle.checked,
+      setTimeout: setTimeoutToggle.checked,
+      performance: performanceToggle.checked,
+      dateNow: dateNowToggle.checked,
+      requestAnimationFrame: requestAnimationFrameToggle.checked
+    };
+    
+    // Update content script
+    await browser.tabs.sendMessage(currentTab.id, {
+      action: 'updateSettings',
+      settings: settings,
+      isAutoSpeed: true
+    });
+    
+    // Update display
+    updateAutoSpeedDisplay({
+      active: true,
+      speed: selectedSpeed,
+      domain: currentHost
+    });
   }
+  
+  // Visual feedback for mobile
+  autoTriggerBtn.style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    autoTriggerBtn.style.transform = 'scale(1)';
+  }, 100);
 };
 
 // Add both click and touch handlers for auto-trigger button
@@ -253,10 +370,19 @@ const toggles = [
 
 toggles.forEach(toggle => {
   toggle.addEventListener('change', async () => {
-    // If auto-speed is active, use its speed
+    // If running on mobile, prioritize the most effective methods
+    if (isMobileDevice()) {
+      // Force enable the most effective methods for mobile
+      setIntervalToggle.checked = true;
+      setTimeoutToggle.checked = true;
+      // requestAnimationFrame is often the most reliable on mobile
+      requestAnimationFrameToggle.checked = true;
+    }
+    
+    // Rest of your existing code...
     const speed = isAutoSpeedActive ? currentAutoSpeed :
       (document.querySelector('.speed-btn.active:not(.auto-trigger-btn)')?.dataset.speed || 1);
-
+    
     const settings = {
       speed: parseInt(speed),
       setInterval: setIntervalToggle.checked,
@@ -291,7 +417,6 @@ const handleOptionsClick = (e) => {
   setTimeout(() => {
     optionsButton.style.transform = 'scale(1)';
   }, 100);
-  
   browser.runtime.openOptionsPage();
 };
 

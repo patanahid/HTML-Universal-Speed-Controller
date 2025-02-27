@@ -4,6 +4,7 @@ body {
   padding: 15px;
   background-color: #1e1e1e;
   color: #ffffff;
+  
   font-family: Arial, sans-serif;
   -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
 }
@@ -72,7 +73,7 @@ h2 {
   justify-content: space-between;
   align-items: center;
   padding: 10px 15px;
-  background-color: #2d2d2d;
+  background-color: #484848;
   border: 1px solid #404040;
 }
 
@@ -81,12 +82,26 @@ h2 {
   border-color: #4CAF50;
 }
 
+.auto-trigger-btn.modified {
+  border: 2px solid #FFA500;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { border-color: #FFA500; }
+  50% { border-color: #FF8C00; }
+  100% { border-color: #FFA500; }
+}
+
 .auto-status {
   font-weight: bold;
 }
 
 .auto-speed {
-  color: #c0c0c0;
+  padding: 3px;
+  border-radius: 5px;
+  color: #ffffff;
+  background-color: rgb(62, 91, 62);
 }
 
 p {

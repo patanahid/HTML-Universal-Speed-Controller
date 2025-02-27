@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "HTML Universal Speed Controller",
-  "version": "1.0",
+  "version": "1.2",
   "description": "Control the speed of HTML websites with various timing methods",
   "browser_specific_settings": {
     "gecko": {
