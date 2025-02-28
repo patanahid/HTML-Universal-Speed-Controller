@@ -187,13 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function handleSpeedButtonClick() {
   let speed = parseInt(this.dataset.speed);
   
-  // Apply a mobile multiplier if needed
-  if (isMobileDevice() && speed > 1) {
-    const mobileFactor = 1.75;
-    const actualSpeed = speed * mobileFactor;
-    console.log(`Mobile detected: Boosting ${speed}x to ${actualSpeed}x internally`);
-    speed = actualSpeed;
-  }
+  // No speed boost for mobile - keep timing accurate
   
   // Allow all speed changes when auto-speed is active
   const settings = {
@@ -418,6 +412,7 @@ const handleOptionsClick = (e) => {
     optionsButton.style.transform = 'scale(1)';
   }, 100);
   browser.runtime.openOptionsPage();
+  window.close(); // Close the popup when opening options
 };
 
 // Add both click and touch handlers for options button

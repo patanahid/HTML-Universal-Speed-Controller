@@ -432,3 +432,90 @@ button:active {
   background-color: #f44336;
   color: white;
 }
+
+/* Developer Options */
+.toggle-section {
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #363636;
+  border-radius: 4px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.toggle input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 50px;
+  height: 26px;
+  background-color: #1e1e1e;
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle input[type="checkbox"]:checked {
+  background-color: #4CAF50;
+}
+
+.toggle input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s;
+}
+
+.toggle input[type="checkbox"]:checked::before {
+  transform: translateX(24px);
+}
+
+.toggle-label {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.toggle-section .description {
+  margin-top: 5px;
+  margin-left: 60px;
+  font-size: 14px;
+  color: #aaaaaa;
+  padding: 0;
+}
+
+/* Mobile styles for developer options */
+@media (max-width: 600px) {
+  .toggle-section {
+    padding: 15px;
+  }
+
+  .toggle input[type="checkbox"] {
+    width: 60px;
+    height: 32px;
+  }
+
+  .toggle input[type="checkbox"]::before {
+    width: 24px;
+    height: 24px;
+    top: 4px;
+  }
+
+  .toggle input[type="checkbox"]:checked::before {
+    transform: translateX(28px);
+  }
+
+  .toggle-section .description {
+    margin-left: 70px;
+    font-size: 15px;
+  }
+}

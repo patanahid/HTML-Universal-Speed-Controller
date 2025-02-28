@@ -8,7 +8,29 @@ function pageScript() {
     dateNow: true,
     requestAnimationFrame: false,
     isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-    mobileBoostFactor: 1.0
+    mobileBoostFactor: 1.0,
+    // Developer mode settings
+    developerMode: false,
+    logTimingMethods: false,
+    logPerformance: false,
+    logFrameUpdates: false,
+    logMobileOptimization: false
+  };
+
+  // Logger function
+  const log = (type, ...args) => {
+    if (!speedConfig.developerMode) return;
+    
+    const shouldLog = {
+      timing: speedConfig.logTimingMethods,
+      performance: speedConfig.logPerformance,
+      frame: speedConfig.logFrameUpdates,
+      mobile: speedConfig.logMobileOptimization
+    }[type];
+
+    if (shouldLog) {
+      console.log(`[Speed Controller ${type}]`, ...args);
+    }
   };
 
   // Enhanced Mobile-specific configurations
@@ -16,15 +38,11 @@ function pageScript() {
     UPDATE_INTERVAL: 16,
     BATCH_SIZE: 10,
     THROTTLE_THRESHOLD: 50,
-    MIN_TIMEOUT: 5,
+    MIN_TIMEOUT: 8,
     PERFORMANCE_MODES: {
       LOW: { maxSpeed: 2, interval: 32 },
       MEDIUM: { maxSpeed: 4, interval: 24 },
       HIGH: { maxSpeed: 8, interval: 16 }
-    },
-    SPEED_SCALING: {
-      thresholds: [1, 2, 4, 8, 16],
-      factors: [1, 1.1, 1.25, 1.5, 1.75, 2]
     }
   };
 
@@ -32,29 +50,37 @@ function pageScript() {
   const detectMobilePerformance = () => {
     if (!speedConfig.isMobile) return 'HIGH';
     try {
-      const start = performance.now();
-      let count = 0;
-      for (let i = 0; i < 10000; i++) count++;
-      const duration = performance.now() - start;
-      if (duration < 5) return 'HIGH';
-      if (duration < 15) return 'MEDIUM';
-      return 'LOW';
+      log('mobile', 'Detecting mobile performance...');
+      const iterations = 50000;
+      const samples = 3;
+      let totalDuration = 0;
+
+      for (let s = 0; s < samples; s++) {
+        const start = performance.now();
+        let count = 0;
+        for (let i = 0; i < iterations; i++) count++;
+        const duration = performance.now() - start;
+        totalDuration += duration;
+        log('mobile', `Performance sample ${s + 1}: ${duration.toFixed(2)}ms`);
+      }
+
+      const avgDuration = totalDuration / samples;
+      let mode;
+      
+      if (avgDuration < 8) mode = 'HIGH';
+      else if (avgDuration < 20) mode = 'MEDIUM';
+      else mode = 'LOW';
+
+      log('mobile', `Detected performance mode: ${mode} (avg duration: ${avgDuration.toFixed(2)}ms)`);
+      return mode;
     } catch (e) {
+      console.warn('Performance detection error:', e);
+      log('mobile', 'Performance detection failed, defaulting to MEDIUM', e);
       return 'MEDIUM';
     }
   };
 
   const mobilePerformanceMode = detectMobilePerformance();
-
-  // Add a function to calculate appropriate mobile boost factor based on the requested speed
-  function calculateMobileBoostFactor(requestedSpeed) {
-    if (!speedConfig.isMobile || requestedSpeed <= 1) return 1;
-    
-    for (const { threshold, factor } of MOBILE_CONFIG.SPEED_SCALING.thresholds.map((threshold, index) => ({ threshold, factor: MOBILE_CONFIG.SPEED_SCALING.factors[index] }))) {
-      if (requestedSpeed <= threshold) return factor;
-    }
-    return MOBILE_CONFIG.SPEED_SCALING.factors[MOBILE_CONFIG.SPEED_SCALING.factors.length - 1];
-  }
 
   // Store original functions
   const originalClearInterval = window.clearInterval;
@@ -70,43 +96,85 @@ function pageScript() {
   const timers = new Map();
   let lastBatchProcess = 0;
   let timerBatch = [];
+  let virtualClock = {
+    start: originalPerformanceNow(),
+    offset: 0,
+    lastUpdate: originalPerformanceNow()
+  };
+
+  const updateVirtualClock = () => {
+    const now = originalPerformanceNow();
+    const realElapsed = now - virtualClock.lastUpdate;
+    virtualClock.offset += realElapsed * (speedConfig.speed - 1);
+    virtualClock.lastUpdate = now;
+    log('performance', `Virtual clock updated: offset=${virtualClock.offset.toFixed(2)}ms`);
+  };
+
+  const getVirtualTime = () => {
+    updateVirtualClock();
+    return originalPerformanceNow() + virtualClock.offset;
+  };
 
   const processBatch = () => {
     const currentTime = Date.now();
     if (speedConfig.isMobile) {
-      const threshold = MOBILE_CONFIG.PERFORMANCE_MODES[mobilePerformanceMode].interval;
+      const perfMode = MOBILE_CONFIG.PERFORMANCE_MODES[mobilePerformanceMode];
+      const threshold = Math.max(perfMode.interval / 2, MOBILE_CONFIG.MIN_TIMEOUT);
+      
       if (currentTime - lastBatchProcess < threshold) {
+        log('mobile', `Skipping batch process due to threshold (${threshold}ms)`);
         return;
       }
     }
     lastBatchProcess = currentTime;
 
     const batchSize = speedConfig.isMobile ? MOBILE_CONFIG.BATCH_SIZE : timers.size;
+    log('timing', `Processing batch of ${batchSize} timers`);
+    
     let processed = 0;
+    const timerEntries = Array.from(timers.entries());
+    
+    if (speedConfig.isMobile) {
+      timerEntries.sort((a, b) => a[1].timeout - b[1].timeout);
+      log('mobile', 'Sorted timers by priority');
+    }
 
-    for (const [id, timer] of timers.entries()) {
+    for (const [id, timer] of timerEntries) {
       if (processed >= batchSize) break;
 
       if (timer.customTimerId) {
+        log('timing', `Clearing existing timer ${timer.customTimerId}`);
         originalClearInterval(timer.customTimerId);
       }
 
       if (!timer.finished && speedConfig.speed > 0) {
-        const effectiveSpeed = speedConfig.speed * (speedConfig.isMobile ? calculateMobileBoostFactor(speedConfig.speed) : 1);
-        const adjustedTimeout = timer.timeout / effectiveSpeed;
+        const adjustedTimeout = timer.timeout / speedConfig.speed;
+        log('timing', `Adjusted timeout: ${timer.timeout}ms -> ${adjustedTimeout}ms (speed: ${speedConfig.speed}x)`);
 
-        // Use performance mode specific intervals for mobile
         const effectiveTimeout = speedConfig.isMobile ?
           Math.max(adjustedTimeout, MOBILE_CONFIG.PERFORMANCE_MODES[mobilePerformanceMode].interval) :
           adjustedTimeout;
 
-        const newTimerId = originalSetInterval(
-          timer.handler,
-          effectiveTimeout,
-          ...timer.args
-        );
-        timer.customTimerId = newTimerId;
+        if (speedConfig.isMobile && effectiveTimeout < MOBILE_CONFIG.MIN_TIMEOUT * 2) {
+          log('mobile', `Using RAF for fast interval (${effectiveTimeout}ms)`);
+          const rafTimer = () => {
+            timer.handler.apply(null, timer.args);
+            if (!timer.finished) {
+              timer.customTimerId = requestAnimationFrame(rafTimer);
+            }
+          };
+          timer.customTimerId = requestAnimationFrame(rafTimer);
+        } else {
+          const newTimerId = originalSetInterval(
+            timer.handler,
+            effectiveTimeout,
+            ...timer.args
+          );
+          log('timing', `Created new timer ${newTimerId} with timeout ${effectiveTimeout}ms`);
+          timer.customTimerId = newTimerId;
+        }
       } else {
+        log('timing', `Removing finished timer ${id}`);
         timers.delete(id);
       }
       processed++;
@@ -114,11 +182,21 @@ function pageScript() {
   };
 
   const reloadTimers = () => {
+    log('timing', 'Reloading timers');
     if (speedConfig.isMobile) {
-      const threshold = MOBILE_CONFIG.PERFORMANCE_MODES[mobilePerformanceMode].interval;
-      if (timerBatch.length === 0) {
-        timerBatch.push(setTimeout(processBatch, threshold));
+      while (timerBatch.length > 0) {
+        clearTimeout(timerBatch.pop());
       }
+      
+      const interval = MOBILE_CONFIG.PERFORMANCE_MODES[mobilePerformanceMode].interval;
+      log('mobile', `Scheduling batch processing with interval ${interval}ms`);
+      
+      timerBatch.push(setTimeout(() => {
+        processBatch();
+        if (timers.size > 0) {
+          reloadTimers();
+        }
+      }, interval));
     } else {
       processBatch();
     }
@@ -126,6 +204,7 @@ function pageScript() {
 
   // Clear functions with improved cleanup
   window.clearInterval = (id) => {
+    log('timing', `Clearing interval ${id}`);
     originalClearInterval(id);
     const timer = timers.get(id);
     if (timer) {
@@ -138,6 +217,7 @@ function pageScript() {
   };
 
   window.clearTimeout = (id) => {
+    log('timing', `Clearing timeout ${id}`);
     originalClearTimeout(id);
     const timer = timers.get(id);
     if (timer) {
@@ -152,21 +232,23 @@ function pageScript() {
   // Set functions with optimized performance
   window.setInterval = (handler, timeout = 0, ...args) => {
     if (speedConfig.speed === 0) {
+      log('timing', `SetInterval bypassed (speed = 0)`);
       return originalSetInterval(handler, timeout, ...args);
     }
     
     let adjustedTimeout = timeout;
     if (speedConfig.setInterval) {
-      // Apply more aggressive timing for mobile
       if (speedConfig.isMobile) {
-        // Make sure we don't go too fast and crash the browser
         adjustedTimeout = Math.max(timeout / speedConfig.speed, MOBILE_CONFIG.MIN_TIMEOUT);
+        log('mobile', `Adjusted interval for mobile: ${timeout}ms -> ${adjustedTimeout}ms`);
       } else {
         adjustedTimeout = timeout / speedConfig.speed;
+        log('timing', `Adjusted interval: ${timeout}ms -> ${adjustedTimeout}ms`);
       }
     }
     
     const id = originalSetInterval(handler, adjustedTimeout, ...args);
+    log('timing', `Created interval ${id} with timeout ${adjustedTimeout}ms`);
     timers.set(id, {
       id,
       handler,
@@ -180,220 +262,130 @@ function pageScript() {
 
   window.setTimeout = (handler, timeout = 0, ...args) => {
     if (speedConfig.speed === 0) {
+      log('timing', `SetTimeout bypassed (speed = 0)`);
       return originalSetTimeout(handler, timeout, ...args);
     }
     
     let adjustedTimeout = timeout;
     if (speedConfig.setTimeout) {
-      // Apply more aggressive timing for mobile
       if (speedConfig.isMobile) {
-        // Ensure minimum timeout is reasonable for mobile
         adjustedTimeout = Math.max(timeout / speedConfig.speed, MOBILE_CONFIG.MIN_TIMEOUT);
+        log('mobile', `Adjusted timeout for mobile: ${timeout}ms -> ${adjustedTimeout}ms`);
       } else {
         adjustedTimeout = timeout / speedConfig.speed;
+        log('timing', `Adjusted timeout: ${timeout}ms -> ${adjustedTimeout}ms`);
       }
     }
     
     return originalSetTimeout(handler, adjustedTimeout, ...args);
   };
 
-  // Enhanced Performance.now override
+  // Enhanced Performance.now override with virtual clock
   (function() {
-    let performanceNowValue = null;
-    let previousPerformanceNowValue = null;
-    let lastUpdateTime = 0;
-    let lastRealTime = originalPerformanceNow();
-    let timeAccumulator = 0;
-
     window.performance.now = () => {
-      const currentTime = originalPerformanceNow();
-      if (speedConfig.speed === 0) return currentTime;
-
-      const effectiveSpeed = speedConfig.speed * (speedConfig.isMobile ? calculateMobileBoostFactor(speedConfig.speed) : 1);
-      const deltaTime = currentTime - lastRealTime;
-      lastRealTime = currentTime;
-      
-      // Accumulate time with speed factor
-      timeAccumulator += deltaTime * effectiveSpeed;
-      
-      // Update less frequently on mobile for better performance
-      const updateThreshold = speedConfig.isMobile ? 
-        MOBILE_CONFIG.PERFORMANCE_MODES[mobilePerformanceMode].interval : 
-        16;
-        
-      if (currentTime - lastUpdateTime >= updateThreshold) {
-        lastUpdateTime = currentTime;
-        previousPerformanceNowValue = performanceNowValue;
-        performanceNowValue = timeAccumulator;
-      }
-      
-      return performanceNowValue || currentTime;
+      const virtualTime = getVirtualTime();
+      log('performance', `performance.now() -> ${virtualTime.toFixed(2)}ms`);
+      return virtualTime;
     };
   })();
 
-  // Date.now override with improved mobile optimization
+  // Date.now override with virtual clock
   (function() {
     let dateNowValue = null;
     let previousDateNowValue = null;
     let lastUpdateTime = 0;
-    const UPDATE_INTERVAL = speedConfig.isMobile ? MOBILE_CONFIG.UPDATE_INTERVAL : 16;
 
     Date.now = () => {
       const currentTime = originalDateNow();
       if (speedConfig.speed === 0) return currentTime;
 
-      // More frequent updates on mobile for smoother acceleration
-      const updateThreshold = speedConfig.isMobile ? 
-        Math.max(MOBILE_CONFIG.UPDATE_INTERVAL / 2, 10) : 
-        UPDATE_INTERVAL;
-        
-      if (currentTime - lastUpdateTime < updateThreshold) {
-        return dateNowValue || currentTime;
-      }
-
-      if (dateNowValue) {
-        const timeDiff = currentTime - previousDateNowValue;
-        let speedMultiplier = speedConfig.dateNow ? speedConfig.speed : 1;
-        
-        // Apply additional acceleration on mobile
-        if (speedConfig.isMobile && speedConfig.dateNow) {
-          // More aggressive on mobile - use the full boost
-          speedMultiplier = speedConfig.speed;
-        }
-        
-        dateNowValue += timeDiff * speedMultiplier;
-      } else {
-        dateNowValue = currentTime;
-      }
-      
-      previousDateNowValue = currentTime;
-      lastUpdateTime = currentTime;
-      return Math.floor(dateNowValue);
+      const virtualTime = Math.floor(getVirtualTime() + Date.now() - performance.now());
+      log('performance', `Date.now() -> ${virtualTime}`);
+      return virtualTime;
     };
   })();
 
   // RequestAnimationFrame override with adaptive mobile optimizations
   (function() {
-    const callbackMap = new Map();
-    let lastTime = originalDateNow();
-    
-    const newRequestAnimationFrame = (callback) => {
+    const frameCallbacks = new Map();
+    let lastFrameTime = performance.now();
+    let frameCount = 0;
+
+    window.requestAnimationFrame = (callback) => {
       return originalRequestAnimationFrame((timestamp) => {
-        const currentTime = originalDateNow();
+        const now = performance.now();
+        const virtualTimestamp = getVirtualTime();
+        
         if (speedConfig.speed === 0) {
+          log('frame', 'RAF bypassed (speed = 0)');
           callback(timestamp);
           return;
         }
 
-        const deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
-
-        // More aggressive frame timing for mobile
-        const frameThreshold = speedConfig.isMobile ?
-          Math.min(MOBILE_CONFIG.UPDATE_INTERVAL, 16.67) : // Push mobile harder
-          16.67; // 60fps for desktop
-
-        if (!callbackMap.has(callback)) {
-          callbackMap.set(callback, {
-            accumulator: 0,
-            lastProcessed: currentTime,
+        if (!frameCallbacks.has(callback)) {
+          frameCallbacks.set(callback, {
+            lastTime: now,
             frameCount: 0
           });
-          callback(timestamp);
-        } else if (speedConfig.requestAnimationFrame) {
-          const state = callbackMap.get(callback);
+        }
+
+        const state = frameCallbacks.get(callback);
+        const deltaTime = now - state.lastTime;
+        state.lastTime = now;
+
+        if (speedConfig.requestAnimationFrame) {
+          const targetFrameTime = speedConfig.isMobile ? 
+            MOBILE_CONFIG.PERFORMANCE_MODES[mobilePerformanceMode].interval :
+            16.67;
+
+          state.frameCount++;
+          const virtualFrameTime = virtualTimestamp + (state.frameCount * targetFrameTime);
           
-          // Dynamic throttling based on accumulated frames
-          const throttleThreshold = speedConfig.isMobile ? 
-            Math.max(MOBILE_CONFIG.THROTTLE_THRESHOLD / speedConfig.speed, 30) :
-            MOBILE_CONFIG.THROTTLE_THRESHOLD;
+          log('frame', `RAF callback: real=${now.toFixed(2)}ms, virtual=${virtualFrameTime.toFixed(2)}ms`);
+          callback(virtualFrameTime);
           
-          if (speedConfig.isMobile &&
-              currentTime - state.lastProcessed < throttleThreshold) {
+          if (speedConfig.speed > 1) {
             window.requestAnimationFrame(callback);
-            return;
-          }
-
-          // Apply more aggressive boost for rAF on mobile
-          const effectiveSpeed = speedConfig.isMobile ? 
-            speedConfig.speed * 1.2 : // Extra boost for animations
-            speedConfig.speed;
-
-          state.accumulator += deltaTime * effectiveSpeed;
-          state.lastProcessed = currentTime;
-
-          // Process multiple frames per actual frame on mobile
-          const maxFramesPerUpdate = speedConfig.isMobile ? 3 : 1;
-          let framesProcessed = 0;
-          
-          while (state.accumulator >= frameThreshold && framesProcessed < maxFramesPerUpdate) {
-            callback(timestamp + (state.frameCount * frameThreshold));
-            state.accumulator -= frameThreshold;
-            state.frameCount++;
-            framesProcessed++;
-            
-            if (speedConfig.isMobile &&
-                framesProcessed >= maxFramesPerUpdate) {
-              break;
-            }
-          }
-
-          if (state.accumulator > 0 || framesProcessed >= maxFramesPerUpdate) {
-            window.requestAnimationFrame(callback);
-          } else {
-            callbackMap.delete(callback);
           }
         } else {
+          log('frame', 'RAF not accelerated');
           callback(timestamp);
-          callbackMap.delete(callback);
         }
+        
+        frameCallbacks.delete(callback);
       });
     };
-    window.requestAnimationFrame = newRequestAnimationFrame;
   })();
 
   // Message handling for config updates
   window.addEventListener("message", (e) => {
     if (e.data.action === "updateSettings") {
-      const isMobile = speedConfig.isMobile; // Preserve mobile detection
-      
-      // Apply mobile boost factor if needed
-      let appliedSpeed = e.data.settings.speed;
-      if (isMobile && appliedSpeed > 1) {
-        const boostFactor = calculateMobileBoostFactor(appliedSpeed);
-        speedConfig.mobileBoostFactor = boostFactor;
-        appliedSpeed = appliedSpeed * boostFactor;
-        console.log(`Mobile boost: ${e.data.settings.speed}x → ${appliedSpeed}x (${boostFactor}x boost)`);
-      }
+      const isMobile = speedConfig.isMobile;
+      const oldSpeed = speedConfig.speed;
       
       speedConfig = {
         ...e.data.settings,
-        isMobile, // Keep mobile status
-        mobileBoostFactor: speedConfig.mobileBoostFactor, // Keep boost factor
-        speed: appliedSpeed // Use boosted speed for actual execution
+        isMobile,
+        mobileBoostFactor: 1
       };
-      reloadTimers();
-    } else if (e.data.action === "setMobileOptimization") {
-      // Handle specific mobile optimization toggle
-      const mobileOptimizationsEnabled = e.data.optimized;
-      
-      if (mobileOptimizationsEnabled) {
-        // Force enable the most effective methods for mobile
-        speedConfig.setInterval = true;
-        speedConfig.setTimeout = true;
-        speedConfig.performance = true;
-        speedConfig.dateNow = true;
-        speedConfig.requestAnimationFrame = true;
-        
-        // Bump up the boost factor
-        speedConfig.mobileBoostFactor = MOBILE_CONFIG.SPEED_SCALING.factors[MOBILE_CONFIG.SPEED_SCALING.factors.length - 1];
-        
-        // Recalculate speed with the boosted factor
-        const userSelectedSpeed = speedConfig.speed / (speedConfig.mobileBoostFactor || 1);
-        speedConfig.speed = userSelectedSpeed * speedConfig.mobileBoostFactor;
+
+      log('timing', `Settings updated: speed ${oldSpeed}x -> ${speedConfig.speed}x`);
+      if (speedConfig.isMobile) {
+        log('mobile', 'Mobile optimizations:', speedConfig);
       }
-      
+
       reloadTimers();
+    } else if (e.data.action === "updateLoggingSettings") {
+      const oldDeveloperMode = speedConfig.developerMode;
+      
+      speedConfig = {
+        ...speedConfig,
+        ...e.data.settings
+      };
+
+      if (speedConfig.developerMode !== oldDeveloperMode) {
+        log('timing', `Developer mode ${speedConfig.developerMode ? 'enabled' : 'disabled'}`);
+      }
     }
   });
 }
@@ -403,7 +395,7 @@ try {
   const script = document.createElement("script");
   script.textContent = `(${pageScript.toString()})();`;
   document.documentElement.appendChild(script);
-  script.remove(); // Clean up after injection
+  script.remove();
 } catch (error) {
   console.error('Error injecting speed controller script:', error);
 }
@@ -412,12 +404,11 @@ try {
 browser.runtime.onMessage.addListener(async (message) => {
   try {
     if (message.action === "updateSettings") {
-      // Don't override auto-speed settings when manually changing speed
       if (!message.isAutoSpeed) {
         const { autoSpeedSites = {} } = await browser.storage.local.get('autoSpeedSites');
         const currentHost = window.location.hostname;
         if (currentHost in autoSpeedSites) {
-          return; // Don't apply manual speed if auto-speed is active
+          return;
         }
       }
       window.postMessage({
@@ -426,6 +417,11 @@ browser.runtime.onMessage.addListener(async (message) => {
       }, "*");
     } else if (message.action === "checkAutoSpeed") {
       await checkAutoSpeedSite();
+    } else if (message.action === "updateLoggingSettings") {
+      window.postMessage({
+        action: "updateLoggingSettings",
+        settings: message.settings
+      }, "*");
     }
   } catch (error) {
     console.error('Error handling message:', error);
@@ -439,20 +435,44 @@ checkAutoSpeedSite();
 async function checkAutoSpeedSite() {
   try {
     const currentHost = window.location.hostname;
-    const { autoSpeedSites = {} } = await browser.storage.local.get('autoSpeedSites');
+    const { 
+      autoSpeedSites = {},
+      developerMode = false,
+      logTimingMethods = false,
+      logPerformance = false,
+      logFrameUpdates = false,
+      logMobileOptimization = false
+    } = await browser.storage.local.get([
+      'autoSpeedSites',
+      'developerMode',
+      'logTimingMethods',
+      'logPerformance',
+      'logFrameUpdates',
+      'logMobileOptimization'
+    ]);
     
+    // First update logging settings
+    window.postMessage({
+      action: "updateLoggingSettings",
+      settings: {
+        developerMode,
+        logTimingMethods,
+        logPerformance,
+        logFrameUpdates,
+        logMobileOptimization
+      }
+    }, "*");
+
     if (currentHost in autoSpeedSites) {
       const speed = autoSpeedSites[currentHost];
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
-      // Show notification
       browser.runtime.sendMessage({
         action: 'showNotification',
         title: 'Auto-Speed Activated',
         message: `Speed set to ${speed}x for ${currentHost}`
       });
 
-      // Update popup with auto-speed status
       browser.runtime.sendMessage({
         action: 'updateAutoSpeedStatus',
         status: {
@@ -462,29 +482,19 @@ async function checkAutoSpeedSite() {
         }
       });
 
-      // Calculate optimized settings for mobile
-      let effectiveSpeed = speed;
-      if (isMobile && speed > 1) {
-        const boostFactor = calculateMobileBoostFactor(speed);
-        effectiveSpeed = speed * boostFactor;
-        console.log(`Auto-speed mobile boost: ${speed}x → ${effectiveSpeed}x (${boostFactor}x boost)`);
-      }
-
-      // Apply speed settings with optimizations for mobile
       window.postMessage({
         action: "updateSettings",
         settings: {
-          speed: effectiveSpeed,
+          speed: speed,
           setInterval: true,
           setTimeout: true,
           performance: true,
           dateNow: true,
-          requestAnimationFrame: isMobile, // Enable rAF on mobile for better animation control
+          requestAnimationFrame: isMobile,
           isMobile: isMobile
         }
       }, "*");
     } else {
-      // Update popup that no auto-speed is active
       browser.runtime.sendMessage({
         action: 'updateAutoSpeedStatus',
         status: {

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "HTML Universal Speed Controller",
-  "version": "1.4",
+  "version": "1.5",
   "description": "Control the speed of HTML websites with various timing methods",
   "browser_specific_settings": {
     "gecko": {
@@ -20,7 +20,8 @@
   },
   "content_scripts": [{
     "matches": ["<all_urls>"],
-    "js": ["content.js"]
+    "js": ["content.js"],
+    "run_at": "document_start"
   }],
   "browser_action": {
     "default_popup": "popup/popup.html",

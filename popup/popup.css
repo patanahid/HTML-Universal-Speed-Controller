@@ -1,45 +1,63 @@
-<<<<<<< HEAD
 body {
   width: 300px;
   margin: 0;
   padding: 15px;
   background-color: #1e1e1e;
   color: #ffffff;
-  
   font-family: Arial, sans-serif;
   -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  touch-action: manipulation; /* Optimize touch actions */
 }
 
-/* Mobile styles */
+/* Enhanced Mobile styles */
 @media (max-width: 600px) {
   body {
     width: 100%;
     min-height: 100vh;
     padding: 20px;
     box-sizing: border-box;
+    overscroll-behavior: none; /* Prevent bounce/rubber-band effect */
   }
 
   /* Increase touch targets for mobile */
   .speed-btn,
   .auto-trigger-btn,
   #optionsButton {
-    min-height: 44px; /* Minimum touch target size */
+    min-height: 48px; /* Increased minimum touch target size */
     padding: 12px 16px;
+    margin: 2px 0; /* Add margin to prevent accidental touches */
   }
 
-  /* Add spacing between buttons for better touch targets */
+  /* Improved spacing between buttons for better touch targets */
   .speed-buttons {
-    gap: 12px;
+    gap: 14px;
+    padding: 4px; /* Add padding to prevent edge touches */
   }
 
   /* Make toggles easier to tap */
   .toggle-item {
-    padding: 8px 0;
+    padding: 10px 0;
+    min-height: 44px; /* Minimum height for better touch */
   }
 
   input[type="checkbox"] {
-    width: 24px;
-    height: 24px;
+    width: 28px; /* Increased size */
+    height: 28px;
+    margin-right: 12px; /* More space between checkbox and label */
+  }
+
+  /* Prevent zoom on input focus */
+  input[type="text"],
+  input[type="number"] {
+    font-size: 16px;
+  }
+
+  /* Add active state feedback */
+  .speed-btn:active,
+  .auto-trigger-btn:active,
+  #optionsButton:active {
+    transform: scale(0.96);
+    transition: transform 0.1s;
   }
 }
 
@@ -50,6 +68,7 @@ body {
 .toggle-item label {
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none; /* Prevent long-press menu */
 }
 
 .container {
@@ -196,203 +215,4 @@ input[type="checkbox"] {
 
 button:active {
   transform: scale(0.98);
-=======
-body {
-  width: 300px;
-  margin: 0;
-  padding: 15px;
-  background-color: #1e1e1e;
-  color: #ffffff;
-  
-  font-family: Arial, sans-serif;
-  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
-}
-
-/* Mobile styles */
-@media (max-width: 600px) {
-  body {
-    width: 100%;
-    min-height: 100vh;
-    padding: 20px;
-    box-sizing: border-box;
-  }
-
-  /* Increase touch targets for mobile */
-  .speed-btn,
-  .auto-trigger-btn,
-  #optionsButton {
-    min-height: 44px; /* Minimum touch target size */
-    padding: 12px 16px;
-  }
-
-  /* Add spacing between buttons for better touch targets */
-  .speed-buttons {
-    gap: 12px;
-  }
-
-  /* Make toggles easier to tap */
-  .toggle-item {
-    padding: 8px 0;
-  }
-
-  input[type="checkbox"] {
-    width: 24px;
-    height: 24px;
-  }
-}
-
-/* Prevent text selection on mobile */
-.speed-btn,
-.auto-trigger-btn,
-#optionsButton,
-.toggle-item label {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-h2 {
-  margin: 0 0 10px 0;
-  text-align: center;
-  color: #4CAF50;
-}
-
-.auto-speed-button {
-  margin-bottom: 15px;
-}
-
-.auto-trigger-btn {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 15px;
-  background-color: #484848;
-  border: 1px solid #404040;
-}
-
-.auto-trigger-btn.active {
-  background-color: #4CAF50;
-  border-color: #4CAF50;
-}
-
-.auto-trigger-btn.modified {
-  border: 2px solid #FFA500;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { border-color: #FFA500; }
-  50% { border-color: #FF8C00; }
-  100% { border-color: #FFA500; }
-}
-
-.auto-status {
-  font-weight: bold;
-}
-
-.auto-speed {
-  padding: 3px;
-  border-radius: 5px;
-  color: #ffffff;
-  background-color: rgb(62, 91, 62);
-}
-
-p {
-  color: rgb(192, 192, 192);
-  font-size: .8rem;
-  margin: 0;
-}
-
-.speed-buttons {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.speed-btn {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  background-color: #2d2d2d;
-  color: white;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s;
-}
-
-.speed-btn:hover {
-  background-color: #404040;
-}
-
-.speed-btn.active {
-  background-color: #4CAF50;
-}
-
-.speed-btn.stop-btn {
-  background-color: #f44336;
-  grid-column: span 3;
-}
-
-.speed-btn.stop-btn:hover {
-  background-color: #d32f2f;
-}
-
-.toggles {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px;
-  background-color: #2d2d2d;
-  border-radius: 4px;
-}
-
-.toggle-item {
-  display: flex;
-  align-items: center;
-}
-
-.toggle-item label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-
-input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #4CAF50;
-}
-
-.buttons {
-  display: flex;
-  gap: 10px;
-}
-
-#optionsButton {
-  width: 100%;
-  padding: 8px 16px;
-  border: 1px solid #404040;
-  border-radius: 4px;
-  background-color: #2d2d2d;
-  color: white;
-  cursor: pointer;
-  font-weight: bold;
-  transition: all 0.2s;
-}
-
-#optionsButton:hover {
-  background-color: #404040;
-}
-
-button:active {
-  transform: scale(0.98);
->>>>>>> 35e68879b7b90e7d6fd44c7ef4d72d42ef2b8e9a
 }
