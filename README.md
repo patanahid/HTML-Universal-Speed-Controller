@@ -2,9 +2,10 @@ This is git repository for Firefox Extension HTML Universal Speed Control (open 
 
 The extension is particularly useful for:
 
-Time-based websites, that makes you wait.
-Video/audio content playback
-Animations
-Learning/tutorial websites
-Game speed modifications
-It's designed to work across different browsers and platforms, with special optimizations for mobile devices to ensure smooth performance.
+- Bypassing waiting timers on ad websites
+- Skipping timed redirects on download pages
+- Accelerating countdown timers to access content quickly
+- Speeding up "Please wait X seconds" screens
+- Circumventing timed paywalls and content restrictions
+
+It's designed to work across different browsers and platforms, with special optimizations for mobile devices to ensure smooth performance when dealing with annoying ad timers.
